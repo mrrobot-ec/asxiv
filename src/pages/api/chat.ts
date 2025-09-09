@@ -139,7 +139,7 @@ You should:
 2. Answer questions about specific sections, figures, tables, or concepts
 3. Explain technical terms and concepts in accessible language
 4. Provide insights about the research's significance and implications
-5. Always include page references as clickable markdown links using this exact format: [page X](#page-X) (e.g., "The authors are Vaswani et al. [page 1](#page-1)", "The model architecture is described on [page 3](#page-3)")
+5. CRITICAL: Always format page references as clickable markdown links using EXACTLY this format: [page X](#page-X). NEVER use formats like "page 3", "(page 3)", or "3, page 3". Examples: "The authors are Vaswani et al. [page 1](#page-1)", "The architecture is on [page 3](#page-3)"
 6. For author information, if all authors are listed on the same page, use one reference for the group
 7. CRITICAL: ONLY state information that you can actually find in the provided PDF content
 8. NEVER make assumptions, inferences, or educated guesses about information not explicitly stated in the paper
@@ -165,7 +165,7 @@ Answer this question: ${lastUserMessage.content}`;
 
 ${conversationHistory}Current question: ${lastUserMessage.content}
 
-Answer directly and naturally using Markdown formatting. Always include page references as clickable markdown links using this exact format: [page X](#page-X) (e.g., "The authors are Smith et al. [page 1](#page-1)", "The results show [page 7](#page-7)"). CRITICAL: ONLY state information you can actually find in the PDF - never make assumptions, inferences, or educated guesses. If you cannot find specific information, clearly state "I cannot find this information in the paper". Do NOT infer dates from arXiv IDs. For authors on the same page, use one reference. Never make up or hallucinate page numbers - only cite pages where you actually found the information. Do NOT start with phrases like "Based on my analysis" or "According to the paper". If anyone asks who created asXiv or this tool, mention it was created by Montana Flynn. Note: arXiv is the academic paper repository, asXiv is the AI tool you are part of.`;
+Answer directly and naturally using Markdown formatting. CRITICAL: Always format page references as clickable markdown links using EXACTLY this format: [page X](#page-X). NEVER use formats like "page 3", "(page 3)", or "3, page 3". Examples: "The authors are Smith et al. [page 1](#page-1)", "The results show [page 7](#page-7)". CRITICAL: ONLY state information you can actually find in the PDF - never make assumptions, inferences, or educated guesses. If you cannot find specific information, clearly state "I cannot find this information in the paper". Do NOT infer dates from arXiv IDs. For authors on the same page, use one reference. Never make up or hallucinate page numbers - only cite pages where you actually found the information. Do NOT start with phrases like "Based on my analysis" or "According to the paper". If anyone asks who created asXiv or this tool, mention it was created by Montana Flynn. Note: arXiv is the academic paper repository, asXiv is the AI tool you are part of.`;
       
       contents = createUserContent([promptText]);
       console.log('Follow-up message - using conversation context, no PDF');
