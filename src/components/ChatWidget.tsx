@@ -1,0 +1,366 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import styles from './ChatWidget.module.css';
+
+// Component to render markdown with clickable page references
+const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {
+  const handlePageClick = (pageNum: string) => {
+    if (typeof window !== 'undefined') {
+      const pdfFrame = document.getElementById('pdfFrame') as HTMLIFrameElement;
+      if (pdfFrame && pdfFrame.src) {
+        const baseUrl = pdfFrame.src.split('#')[0];
+        pdfFrame.src = `${baseUrl}#page=${pageNum}`;
+      }
+    }
+  };
+  
+  return (
+    <ReactMarkdown 
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: ({ href, children, ...props }) => {
+          // Check if this is a page reference link
+          const pageMatch = href?.match(/^#page-(\d+)$/);
+          if (pageMatch) {
+            const pageNum = pageMatch[1];
+            return (
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageClick(pageNum);
+                }}
+                className={styles.pageLink}
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          }
+          return <a href={href} {...props}>{children}</a>;
+        }
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+};
+
+
+interface Message {
+  id: string;
+  text: string;
+  isBot: boolean;
+  timestamp: Date;
+  isError?: boolean;
+}
+
+interface ChatWidgetProps {
+  arxivId?: string;
+}
+
+const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
+  const router = useRouter();
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [, setError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Get arxivId from router if not provided as prop
+  const currentArxivId = arxivId || (router.query.arxivId as string);
+
+  const scrollToUserMessage = () => {
+    // Find the last user message and scroll to it instead of the bottom
+    const chatContainer = document.querySelector(`.${styles.messages}`);
+    if (chatContainer) {
+      const messageElements = chatContainer.querySelectorAll(`.${styles.message}`);
+      if (messageElements.length >= 2) {
+        // Scroll to the second-to-last message (which should be the user's question)
+        const userMessage = messageElements[messageElements.length - 2] as HTMLElement;
+        const containerRect = chatContainer.getBoundingClientRect();
+        const messageRect = userMessage.getBoundingClientRect();
+        const scrollTop = chatContainer.scrollTop + (messageRect.top - containerRect.top) - 20; // 20px top padding
+        
+        chatContainer.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback to bottom if we don't have enough messages
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Only scroll when we have both user message and bot response
+    if (messages.length >= 2) {
+      // Add a small delay to ensure the message is rendered
+      setTimeout(scrollToUserMessage, 100);
+    }
+  }, [messages]);
+
+  const handleWelcomeMessage = useCallback(async (welcomePrompt: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [{
+            role: 'user',
+            content: welcomePrompt
+          }],
+          arxivId: currentArxivId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate welcome message');
+      }
+
+      const data = await response.json();
+      if (data.response) {
+        setMessages([{
+          id: 'welcome',
+          text: data.response,
+          isBot: true,
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error: unknown) {
+      console.error('Welcome message error:', error);
+      // Fallback to simple welcome message
+      setMessages([{
+        id: 'welcome',
+        text: `Welcome! I'm here to help you understand arXiv paper ${currentArxivId}. Ask me anything about the paper!`,
+        isBot: true,
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentArxivId]);
+
+  // Initialize with AI-generated welcome message when arxivId changes
+  useEffect(() => {
+    if (currentArxivId && messages.length === 0) {
+      // Send an automatic welcome request to the AI
+      const welcomeMessage = 'Please provide a welcome message for this paper with suggested questions I can ask about it.';
+      handleWelcomeMessage(welcomeMessage);
+    }
+  }, [currentArxivId, messages.length, handleWelcomeMessage]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      
+      if (!message.trim() || isLoading || !currentArxivId) return;
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: message.trim(),
+        isBot: false,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setMessage('');
+      setIsLoading(true);
+      setError(null);
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    try {
+      // Prepare messages for API (exclude timestamps and IDs)
+      const apiMessages = messages
+        .filter(msg => !msg.isBot || msg.id !== 'welcome') // Exclude welcome message
+        .concat(userMessage)
+        .map(msg => ({
+          role: msg.isBot ? 'assistant' : 'user' as const,
+          content: msg.text
+        }));
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          arxivId: currentArxivId
+        }),
+        signal: abortControllerRef.current.signal
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        
+        // Extract detailed error information
+        let errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+        
+        // Try to parse JSON error structures (e.g., from Gemini API)
+        if (typeof errorMessage === 'string' && errorMessage.includes('{')) {
+          try {
+            // Extract everything after the first hyphen and space, then parse JSON
+            const parts = errorMessage.split(' - ');
+            if (parts.length > 1) {
+              const jsonPart = parts.slice(1).join(' - '); // In case there are multiple hyphens
+              const jsonError = JSON.parse(jsonPart);
+              if (jsonError.error && jsonError.error.message) {
+                errorMessage = `${parts[0]} - ${jsonError.error.message}`;
+              }
+            }
+          } catch {
+            // If JSON parsing fails, keep the original message
+          }
+        }
+        
+        // If there are additional error details, include them
+        if (errorData.details && !errorMessage.includes(errorData.details)) {
+          errorMessage += ` - ${errorData.details}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Handle JSON response from Gemini
+      const data = await response.json();
+      if (!data.response) {
+        throw new Error('No response from AI');
+      }
+
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.response,
+        isBot: true,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return; // Request was cancelled, don't show error
+      }
+      
+      console.error('Chat error:', error);
+      
+      // Add error message as a bot message in the chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: error instanceof Error ? error.message : 'Failed to get response. Please try again.',
+        isBot: true,
+        timestamp: new Date(),
+        isError: true
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      setError(null); // Clear any existing error state
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+    } catch (unexpectedError: unknown) {
+      // Handle any unexpected runtime errors
+      console.error('Unexpected error in handleSubmit:', unexpectedError);
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: unexpectedError instanceof Error ? unexpectedError.message : 'An unexpected error occurred. Please try refreshing the page.',
+        isBot: true,
+        timestamp: new Date(),
+        isError: true
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      setIsLoading(false);
+      setError(null);
+    }
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2 className={styles.headerTitle}>AI Assistant</h2>
+        <p className={styles.headerSubtitle}>
+          {currentArxivId ? (
+            <a 
+              href={`https://arxiv.org/abs/${currentArxivId}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={styles.arxivLink}
+            >
+              arXiv:{currentArxivId}
+            </a>
+          ) : (
+            'No paper selected'
+          )}
+        </p>
+      </div>
+      <div className={styles.messages} role="log" aria-live="polite">
+        {messages.map((msg) => (
+          <div 
+            key={msg.id} 
+            className={`${styles.message} ${msg.isBot ? styles.bot : styles.user} ${msg.isError ? styles.error : ''}`}
+            role={msg.isBot ? 'assistant' : 'user'}
+          >
+            {msg.isBot ? (
+              <MarkdownWithPageLinks content={msg.text} />
+            ) : (
+              msg.text
+            )}
+          </div>
+        ))}
+        {isLoading && (
+          <div className={`${styles.message} ${styles.bot} ${styles.loading}`}>
+            <span className={styles.loadingDots}>●●●</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <form onSubmit={handleSubmit} className={styles.inputRow}>
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={isLoading ? "AI is typing..." : "Type a message…"}
+          className={styles.input}
+          aria-label="Type your message"
+          disabled={isLoading || !currentArxivId}
+        />
+        <button 
+          type="submit" 
+          className={styles.sendButton} 
+          aria-label="Send message"
+          disabled={isLoading || !message.trim() || !currentArxivId}
+        >
+          {isLoading ? '...' : 'Send'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default ChatWidget;

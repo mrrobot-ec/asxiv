@@ -1,0 +1,26 @@
+.iframe {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 400px; /* Leave space for chat widget */
+  bottom: 0;
+  width: calc(100vw - 400px);
+  height: 100vh;
+  border: none;
+  z-index: 0;
+}
+
+/* Responsive iframe sizing */
+@media (max-width: 768px) {
+  .iframe {
+    right: 0;
+    width: 100vw;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .iframe {
+    right: 350px;
+    width: calc(100vw - 350px);
+  }
+}

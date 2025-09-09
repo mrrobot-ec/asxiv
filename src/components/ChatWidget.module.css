@@ -1,0 +1,344 @@
+.container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-size: 14px;
+  width: 400px;
+  background: #ffffff;
+  border-left: 1px solid var(--arxiv-border, #dddddd);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  padding: 1rem;
+  background: var(--arxiv-red, #89131b);
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.headerTitle {
+  margin: 0 0 0.25rem 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.headerSubtitle {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+  font-family: monospace;
+}
+
+.arxivLink {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--arxiv-light-gray, #f8f9fa);
+  border-bottom: 1px solid var(--arxiv-border, #dddddd);
+  min-height: 0; /* Important for flex child with overflow */
+}
+
+.message {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.message.bot {
+  background: #ffffff;
+  border: 1px solid var(--arxiv-border, #dddddd);
+  margin-right: 2rem;
+  line-height: 1.5;
+  max-width: 90%;
+  width: fit-content;
+}
+
+.message.user {
+  background: var(--arxiv-red, #89131b);
+  color: #ffffff;
+  max-width: 70%;
+  margin-left: auto;
+  margin-right: 0;
+  width: fit-content;
+  text-align: left;
+}
+
+/* Markdown formatting styles for bot messages */
+
+.message.bot h1,
+.message.bot h2,
+.message.bot h3,
+.message.bot h4,
+.message.bot h5,
+.message.bot h6 {
+  margin: 1em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.message.bot h1 { font-size: 1.4em; }
+.message.bot h2 { font-size: 1.3em; }
+.message.bot h3 { font-size: 1.2em; }
+.message.bot h4 { font-size: 1.1em; }
+.message.bot h5 { font-size: 1em; }
+.message.bot h6 { font-size: 0.9em; }
+
+.message.bot h1:first-child,
+.message.bot h2:first-child,
+.message.bot h3:first-child,
+.message.bot h4:first-child,
+.message.bot h5:first-child,
+.message.bot h6:first-child {
+  margin-top: 0;
+}
+
+.message.bot p {
+  margin: 0.8em 0;
+}
+
+.message.bot p:first-child {
+  margin-top: 0;
+}
+
+.message.bot p:last-child {
+  margin-bottom: 0;
+}
+
+.message.bot ul,
+.message.bot ol {
+  margin: 0.8em 0;
+  padding-left: 1.5em;
+  list-style: disc;
+}
+
+.message.bot ol {
+  list-style: decimal;
+}
+
+.message.bot li {
+  margin: 0.3em 0;
+  display: list-item;
+}
+
+.message.bot strong {
+  font-weight: 600;
+}
+
+.message.bot em {
+  font-style: italic;
+}
+
+.message.bot code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: 0.9em;
+}
+
+.message.bot pre {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 1em;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
+.message.bot pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85em;
+}
+
+.message.bot blockquote {
+  border-left: 3px solid var(--arxiv-red, #89131b);
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  background: rgba(0, 0, 0, 0.02);
+  font-style: italic;
+}
+
+.message.bot table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  width: 100%;
+  font-size: 0.9em;
+}
+
+.message.bot th,
+.message.bot td {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+
+.message.bot th {
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.message.bot hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 1.5em 0;
+}
+
+/* Page reference links */
+.pageLink {
+  color: var(--arxiv-red, #89131b) !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500;
+}
+
+:global(.page-link) {
+  color: var(--arxiv-red, #89131b) !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500;
+}
+
+.inputRow {
+  display: flex;
+  background: #ffffff;
+  border-top: 1px solid var(--arxiv-border, #dddddd);
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+.input {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid var(--arxiv-border, #dddddd);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: #ffffff;
+}
+
+.input:focus {
+  border-color: var(--arxiv-red, #89131b);
+  box-shadow: 0 0 0 2px rgba(137, 19, 27, 0.1);
+}
+
+.sendButton {
+  padding: 1rem 1.5rem;
+  background: var(--arxiv-red, #89131b);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: #750f16;
+}
+
+.sendButton:active:not(:disabled) {
+  background: #5d0c12;
+}
+
+/* Loading and error states */
+.loading {
+  opacity: 0.7;
+}
+
+.loadingDots {
+  display: inline-block;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.message.error {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #dc2626 !important;
+}
+
+.message.error.bot {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+.error {
+  background: #fee;
+  border-color: #fcc;
+  color: #c66;
+}
+
+/* Disabled states */
+.input:disabled {
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.sendButton:disabled {
+  cursor: not-allowed;
+}
+
+/* Responsive styles for mobile and tablet */
+@media (max-width: 768px) {
+  .container {
+    width: 100vw;
+    left: 0;
+    right: 0;
+    border-left: none;
+    border-top: 1px solid var(--arxiv-border, #dddddd);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header {
+    padding: 0.75rem;
+  }
+  
+  .messages {
+    padding: 0.75rem;
+  }
+  
+  .inputRow {
+    padding: 0.75rem;
+  }
+  
+  .input {
+    padding: 0.75rem;
+  }
+  
+  .sendButton {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .container {
+    width: 350px;
+  }
+}
