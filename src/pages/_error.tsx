@@ -25,7 +25,7 @@ const Error = ({ statusCode }: ErrorProps) => {
         <p className={styles.instruction}>
           Go back to: <Link href="/" className={styles.link}>Home</Link>
         </p>
-        <div className={styles.instruction}>
+        <div className={styles.instruction} style={{ paddingTop: '1rem' }}>
           <a href="https://github.com/montanaflynn/asxiv" target="_blank" rel="noopener noreferrer" className={styles.link}>GitHub</a>
         </div>
       </div>
