@@ -14,6 +14,9 @@ const Home = () => {
         <p className={styles.example}>
           Example: <a href="/pdf/1706.03762" className={styles.link}>/pdf/1706.03762 (Attention Is All You Need)</a>
         </p>
+        <div className={styles.instruction}>
+          <a href="https://github.com/montanaflynn/asxiv" target="_blank" rel="noopener noreferrer" className={styles.link}>GitHub</a>
+        </div>
       </div>
     </div>
   );

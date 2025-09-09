@@ -337,6 +337,21 @@
   }
 }
 
+.githubLink {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.githubLink:hover {
+  color: rgba(255, 255, 255, 1);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 @media (max-width: 1024px) and (min-width: 769px) {
   .container {
     width: 350px;
