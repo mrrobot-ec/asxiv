@@ -89,6 +89,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
   const [, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Get arxivId from router if not provided as prop
   const currentArxivId = arxivId || (router.query.arxivId as string);
@@ -236,6 +237,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      // Refocus input after suggested question submission
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
@@ -424,6 +427,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      // Refocus input after form submission
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
     } catch (unexpectedError: unknown) {
       // Handle any unexpected runtime errors
@@ -440,6 +445,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
       setMessages(prev => [...prev, errorMessage]);
       setIsLoading(false);
       setError(null);
+      // Refocus input after error
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
@@ -518,6 +525,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
       </div>
       <form onSubmit={handleSubmit} className={styles.inputRow}>
         <input
+          ref={inputRef}
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
