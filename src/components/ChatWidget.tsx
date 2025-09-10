@@ -15,6 +15,11 @@ const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {
       }
     }
   };
+
+  // Convert (page N) format to clickable links
+  const processedContent = content.replace(/\(page\s+(\d+)\)/g, (match, pageNum) => {
+    return `[${match}](#page-${pageNum})`;
+  });
   
   return (
     <ReactMarkdown 
@@ -43,7 +48,7 @@ const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {
         }
       }}
     >
-      {content}
+      {processedContent}
     </ReactMarkdown>
   );
 };

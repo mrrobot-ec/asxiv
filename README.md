@@ -93,6 +93,9 @@ src/
 3. Styling updates in CSS modules
 4. New page types in `/pages/pdf/`
 
+### Page Reference Format
+The AI uses a standardized format for page references: `(page N)` where N is the page number. These are automatically converted to clickable links that navigate the PDF viewer. This simple format avoids complex regex parsing while maintaining clean functionality.
+
 ## Contributing
 
 We welcome contributions! Here's how to get started:
