@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/router';
-import PdfViewer from '../[...arxivId]';
+import PdfViewer from '../../../pages/pdf/[...arxivId]';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
