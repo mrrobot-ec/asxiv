@@ -270,7 +270,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate welcome message');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('API Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          arxivId: currentArxivId
+        });
+        throw new Error(`Welcome message API error: ${errorMessage}`);
       }
 
       const data: ChatApiResponse = await response.json();
@@ -278,6 +286,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
       // Use structured response if available, fallback to plain text
       const messageText = data.structured?.content || data.response || '';
       const structuredData = data.structured;
+      
+      if (!messageText) {
+        throw new Error('Empty response from AI API');
+      }
       
       setMessages([{
         id: 'welcome',
@@ -288,12 +300,24 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
       }]);
     } catch (error: unknown) {
       console.error('Welcome message error:', error);
-      // Fallback to simple welcome message
+      // Provide a more detailed fallback message with debugging info
+      const fallbackMessage = `Welcome! I'm here to help you understand arXiv paper ${currentArxivId}. \n\nAsk me anything about the paper!\n\n*Note: AI-generated welcome message is temporarily unavailable. You can still chat about the paper.*`;
+      
       setMessages([{
         id: 'welcome',
-        text: `Welcome! I'm here to help you understand arXiv paper ${currentArxivId}. Ask me anything about the paper!`,
+        text: fallbackMessage,
         isBot: true,
-        timestamp: new Date()
+        timestamp: new Date(),
+        structured: {
+          content: fallbackMessage,
+          suggestedQuestions: [
+            { text: "What is this paper about?", description: "Get an overview of the paper's main topic" },
+            { text: "What are the key findings?", description: "Learn about the main results and conclusions" },
+            { text: "What methodology was used?", description: "Understand the research approach and methods" },
+            { text: "Who are the authors?", description: "Learn about the paper's authors and affiliations" }
+          ],
+          responseType: 'welcome' as const
+        }
       }]);
     } finally {
       setIsLoading(false);

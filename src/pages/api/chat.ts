@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenAI, createUserContent, createPartFromUri, Type } from '@google/genai';
 import { StructuredChatResponse, ChatApiResponse } from '../../types/chat';
+import { parseArxivId, getArxivPdfUrl, getArxivFileName, getCategoryPromptContext } from '../../utils/arxivUtils';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -67,9 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid request body' });
     }
 
+    // Parse and validate ArXiv ID
+    const parsed = parseArxivId(arxivId);
+    if (!parsed.isValid) {
+      return res.status(400).json({ error: `Invalid ArXiv ID format: ${arxivId}` });
+    }
+    
     // Download PDF and send content directly
-    const pdfUrl = `https://arxiv.org/pdf/${arxivId}.pdf`;
-    console.log(`Processing arXiv paper: ${arxivId}`);
+    const pdfUrl = getArxivPdfUrl(parsed.id);
 
     // Get the last user message
     const lastUserMessage = messages[messages.length - 1];
@@ -93,8 +99,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (isFirstMessage) {
       // Upload PDF to Gemini Files API
-      console.log('Uploading PDF to Gemini Files API...');
-      
       // Download PDF first
       const pdfResponse = await fetch(pdfUrl);
       if (!pdfResponse.ok) {
@@ -102,11 +106,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       
       const pdfBuffer = await pdfResponse.arrayBuffer();
-      console.log(`PDF downloaded successfully, size: ${pdfBuffer.byteLength} bytes`);
       
       // Validate that it's actually a PDF
       const pdfHeader = Buffer.from(pdfBuffer.slice(0, 4)).toString();
-      console.log(`PDF header check: ${pdfHeader} (should start with %PDF)`);
       
       if (!pdfHeader.startsWith('%PDF')) {
         throw new Error('Downloaded content is not a valid PDF file');
@@ -114,24 +116,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Check file size
       const fileSizeMB = pdfBuffer.byteLength / (1024 * 1024);
-      console.log(`PDF file size: ${fileSizeMB.toFixed(2)} MB`);
       
       if (fileSizeMB > 2000) { // Files API has higher limits
         throw new Error(`PDF file too large (${fileSizeMB.toFixed(2)} MB). Maximum size is ~2GB`);
       }
       
       // Check if file already exists to avoid re-uploading
-      // Convert arxivId to valid file name format (lowercase alphanumeric + dashes)
-      const fileName = `arxiv-${arxivId.replace(/\./g, '-').toLowerCase()}`;
+      const fileName = getArxivFileName(parsed.id);
       let uploadedFile;
       
       try {
         // Try to get existing file first
         uploadedFile = await genAI.files.get({ name: `files/${fileName}` });
-        console.log('Found existing uploaded file:', uploadedFile.uri);
       } catch {
         // File doesn't exist, try to upload it
-        console.log('File not found, uploading new PDF...');
         try {
           const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
           uploadedFile = await genAI.files.upload({
@@ -139,14 +137,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             config: {
               mimeType: 'application/pdf',
               name: fileName,
-              displayName: `arXiv-${arxivId}.pdf`
+              displayName: `arXiv-${parsed.id}.pdf`
             }
           });
-          console.log('PDF uploaded to Files API:', uploadedFile.uri);
         } catch (uploadError: unknown) {
           // If upload fails because file already exists, try to get it
           if (uploadError instanceof Error && uploadError.message && uploadError.message.includes('already exists')) {
-            console.log('File was created by another request, fetching it...');
             uploadedFile = await genAI.files.get({ name: `files/${fileName}` });
           } else {
             throw uploadError;
@@ -161,7 +157,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let promptText;
       
       if (isWelcomeRequest) {
-        promptText = `You are an AI assistant for arXiv paper ${arxivId}. After analyzing the PDF, create a brief welcome message.
+        // Get category-specific context for old format ArXiv IDs
+        const categoryContext = parsed.category ? getCategoryPromptContext(parsed.category) : 
+          'You are an AI assistant helping a student understand this research paper.';
+        
+        promptText = `${categoryContext}
+
+You are helping with arXiv paper ${parsed.id}. After analyzing the PDF, create a brief welcome message.
 
 For the content field: Provide a brief welcome message with one sentence summary of what this paper is about.
 
@@ -169,7 +171,13 @@ For suggestedQuestions: Create 4-5 specific questions that users can ask about T
 
 Set responseType to "welcome".`;
       } else {
-        promptText = `You are an AI assistant helping users understand and analyze arXiv paper ${arxivId}. You are part of asXiv, a tool created by Montana Flynn.
+        // Get category-specific context for old format ArXiv IDs
+        const categoryContext = parsed.category ? getCategoryPromptContext(parsed.category) : 
+          'You are an AI assistant helping users understand and analyze research papers.';
+        
+        promptText = `${categoryContext}
+
+You are helping with arXiv paper ${parsed.id}. You are part of asXiv, a tool created by Montana Flynn.
 
 Answer this question: ${lastUserMessage.content}
 
@@ -193,10 +201,15 @@ Set responseType to "answer".`;
         "\n\n",
         promptText
       ]);
-      console.log('First message - sending PDF URI with question');
     } else {
       // Follow-up message: use conversation history without re-sending PDF
-      const promptText = `Continue our conversation about arXiv paper ${arxivId}. You have already analyzed the PDF content. You are part of asXiv, a tool created by Montana Flynn.
+      // Get category-specific context for old format ArXiv IDs
+      const categoryContext = parsed.category ? getCategoryPromptContext(parsed.category) : 
+        'You are an AI assistant helping users understand and analyze research papers.';
+        
+      const promptText = `${categoryContext}
+
+Continue our conversation about arXiv paper ${parsed.id}. You have already analyzed the PDF content. You are part of asXiv, a tool created by Montana Flynn.
 
 ${conversationHistory}Current question: ${lastUserMessage.content}
 
@@ -215,10 +228,7 @@ For suggestedQuestions: Provide 2-4 contextually relevant suggested questions ba
 Set responseType to "answer".`;
       
       contents = createUserContent([promptText]);
-      console.log('Follow-up message - using conversation context, no PDF');
     }
-    
-    console.log('About to call Gemini API...');
     
     // Generate response using Gemini
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
@@ -228,8 +238,6 @@ Set responseType to "answer".`;
     if (!validModels.includes(model)) {
       throw new Error(`Invalid GEMINI_MODEL: ${model}. Valid options are: ${validModels.join(', ')}`);
     }
-    
-    console.log(`Using Gemini model: ${model}`);
     const result = await genAI.models.generateContent({
       model: model,
       contents: [contents],
@@ -239,19 +247,15 @@ Set responseType to "answer".`;
       }
     });
 
-    console.log('Gemini API call completed, getting response...');
     const text = result.text;
     if (!text) {
       throw new Error('No text response received from Gemini API');
     }
-    console.log('Text extracted successfully, length:', text.length);
-    console.log('Structured JSON response received from Gemini');
 
     // Parse the guaranteed JSON response from Gemini's structured output
     let structuredResponse: StructuredChatResponse;
     try {
       structuredResponse = JSON.parse(text.trim());
-      console.log('Successfully parsed structured response');
     } catch (parseError) {
       console.error('Unexpected: Failed to parse Gemini structured output as JSON:', parseError);
       throw new Error('Invalid structured response from Gemini API');

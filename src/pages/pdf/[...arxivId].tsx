@@ -3,26 +3,20 @@ import { useEffect, useState } from 'react';
 import styles from '@/styles/Home.module.css';
 import notFoundStyles from '@/styles/NotFound.module.css';
 import ChatWidget from '@/components/ChatWidget';
+import { parseArxivId, getPdfViewerUrl } from '@/utils/arxivUtils';
 
 const PdfViewer = () => {
   const router = useRouter();
   const { arxivId } = router.query;
-  const [isValidId, setIsValidId] = useState<boolean | null>(null);
+  const [parsedArxivId, setParsedArxivId] = useState<ReturnType<typeof parseArxivId> | null>(null);
 
   useEffect(() => {
-    if (typeof arxivId === 'string') {
-      // ArXiv ID format validation
-      // Common formats: 1706.03762, 1234.5678, math-ph/0506203, etc.
-      const arxivIdPattern = /^(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})$/i;
-      setIsValidId(arxivIdPattern.test(arxivId));
-    } else if (arxivId) {
-      // Handle array case (shouldn't happen in this route structure)
-      setIsValidId(false);
-    }
+    const parsed = parseArxivId(arxivId);
+    setParsedArxivId(parsed);
   }, [arxivId]);
 
   // Loading state while router is initializing
-  if (router.isFallback || isValidId === null) {
+  if (router.isFallback || parsedArxivId === null) {
     return (
       <div className={notFoundStyles.container}>
         <div className={notFoundStyles.content}>
@@ -33,7 +27,7 @@ const PdfViewer = () => {
   }
 
   // Invalid ArXiv ID format
-  if (!isValidId) {
+  if (!parsedArxivId.isValid) {
     return (
       <div className={notFoundStyles.container}>
         <div className={notFoundStyles.content}>
@@ -51,17 +45,17 @@ const PdfViewer = () => {
   }
 
   // Valid ArXiv ID - show PDF viewer with chat widget
-  const pdfUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=https://arxiv.org/pdf/${arxivId}&sidebarViewOnLoad=0`;
+  const pdfUrl = getPdfViewerUrl(parsedArxivId.id);
 
   return (
     <>
       <iframe
         id="pdfFrame"
         src={pdfUrl}
-        title={`arXiv PDF Viewer - ${arxivId}`}
+        title={`arXiv PDF Viewer - ${parsedArxivId.id}`}
         className={styles.iframe}
       />
-      <ChatWidget arxivId={arxivId as string} />
+      <ChatWidget arxivId={parsedArxivId.id} />
     </>
   );
 };

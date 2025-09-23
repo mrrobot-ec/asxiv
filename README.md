@@ -75,7 +75,7 @@ src/
 │   ├── api/
 │   │   └── chat.ts        # Gemini API integration
 │   ├── pdf/
-│   │   └── [arxivId].tsx  # Dynamic PDF viewer pages
+│   │   └── [...arxivId].tsx  # Dynamic PDF viewer pages (supports ArXiv IDs with forward slashes)
 │   └── index.tsx          # Homepage
 └── styles/
     └── globals.css        # Global styles
