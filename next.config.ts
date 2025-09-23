@@ -4,12 +4,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   
+  // Redirects from ArXiv-style abstract URLs to PDF viewer
   async redirects() {
     return [
       {
-        source: '/abs/:arxivId',
-        destination: '/pdf/:arxivId',
-        permanent: false,
+        source: '/abs/:path*',
+        destination: '/pdf/:path*',
+        permanent: true,
       },
     ];
   },
