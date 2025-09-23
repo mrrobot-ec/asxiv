@@ -3,8 +3,8 @@ import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import styles from './ChatWidget.module.css';
-import { Message, ChatApiResponse, SuggestedQuestion } from '../types/chat';
-import { processPageReferences, handlePageNavigation } from '../utils/pageLinks';
+import { Message, ChatApiResponse, SuggestedQuestion } from '@/types/chat';
+import { processPageReferences, handlePageNavigation } from '@/utils/pageLinks';
 
 // Component to render markdown with clickable page references
 const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {

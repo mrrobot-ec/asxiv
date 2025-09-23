@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenAI, createUserContent, createPartFromUri, Type } from '@google/genai';
-import { StructuredChatResponse, ChatApiResponse } from '../../types/chat';
-import { parseArxivId, getArxivPdfUrl, getArxivFileName, getCategoryPromptContext } from '../../utils/arxivUtils';
+import { StructuredChatResponse, ChatApiResponse } from '@/types/chat';
+import { parseArxivId, getArxivPdfUrl, getArxivFileName, getCategoryPromptContext } from '@/utils/arxivUtils';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
