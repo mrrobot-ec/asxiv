@@ -8,7 +8,8 @@ import { processPageReferences, handlePageNavigation } from '@/utils/pageLinks';
 
 // Component to render markdown with clickable page references
 const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {
-  const handlePageClick = (pageNum: string) => {
+  const handlePageClick = (pageNum: string | undefined) => {
+    if (!pageNum) return;
     console.log('Page link clicked:', pageNum);
     handlePageNavigation(pageNum);
   };
@@ -79,9 +80,10 @@ const SuggestedQuestions: React.FC<{
 
 interface ChatWidgetProps {
   arxivId?: string;
+  navHeight?: number;
 }
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
+const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
   const router = useRouter();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -484,7 +486,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
   }, []);
 
   return (
-    <div className={styles.container}>
+    <>
+      <style jsx>{`
+        :global(:root) {
+          --nav-height: ${navHeight}px;
+        }
+      `}</style>
+      <div className={styles.container}>
       <div className={styles.header}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -567,7 +575,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId }) => {
           {isLoading ? '...' : 'Send'}
         </button>
       </form>
-    </div>
+      </div>
+    </>
   );
 };
 

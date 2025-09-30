@@ -18,6 +18,7 @@ body {
   background: #ffffff;
   color: #111111;
   line-height: 1.4;
+  padding-top: 72px; /* Account for fixed navigation bar (1rem top + 1rem bottom + 1.5rem font + borders) */
 }
 
 /* arXiv-inspired color palette variables */

@@ -2,6 +2,8 @@
  * ArXiv ID utilities for parsing, validation, and URL generation
  */
 
+import { GoogleGenAI } from '@google/genai';
+
 export interface ParsedArxivId {
   /** The normalized ArXiv ID string (e.g., "cs/0211011" or "1706.03762") */
   id: string;
@@ -21,7 +23,7 @@ export interface ParsedArxivId {
  * - New format: YYMM.NNNNN (e.g., 1706.03762, 2301.12345)
  * - Old format: category/YYMMnnn (e.g., cs/0211011, math-ph/0506203)
  */
-export const ARXIV_ID_PATTERN = /^(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})$/i;
+const ARXIV_ID_PATTERN = /^(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})$/i;
 
 /**
  * Parse ArXiv ID from various input formats
@@ -68,8 +70,8 @@ export function parseArxivId(input: string | string[] | undefined): ParsedArxivI
   
   if (isOldFormat) {
     const parts = arxivId.split('/');
-    category = parts[0];
-    number = parts[1];
+    category = parts[0] ?? null;
+    number = parts[1] ?? null;
   } else {
     const parts = arxivId.split('.');
     number = parts.join('.');
@@ -101,9 +103,8 @@ export function getArxivPdfUrl(arxivId: string): string {
  */
 export function getPdfViewerUrl(arxivId: string): string {
   const pdfUrl = getArxivPdfUrl(arxivId);
-  // URL encode the PDF URL for PDF.js viewer
-  const encodedPdfUrl = encodeURIComponent(pdfUrl);
-  return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodedPdfUrl}&sidebarViewOnLoad=0`;
+  // Use PDF.js viewer with proper configuration
+  return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}&sidebarViewOnLoad=0&toolbarViewOnLoad=0&navpanesViewOnLoad=0&zoom=page-width`;
 }
 
 /**
@@ -114,112 +115,6 @@ export function getPdfViewerUrl(arxivId: string): string {
 export function getArxivFileName(arxivId: string): string {
   // Replace dots and slashes with dashes, convert to lowercase
   return `arxiv-${arxivId.replace(/[./]/g, '-').toLowerCase()}`;
-}
-
-/**
- * Generate ArXiv abstract URL
- * @param arxivId - The ArXiv ID (e.g., "cs/0211011" or "1706.03762")
- * @returns URL to the ArXiv abstract page
- */
-export function getArxivAbstractUrl(arxivId: string): string {
-  return `https://arxiv.org/abs/${arxivId}`;
-}
-
-/**
- * Validate if a string is a valid ArXiv ID
- * @param input - String to validate
- * @returns True if the input is a valid ArXiv ID format
- */
-export function isValidArxivId(input: string): boolean {
-  return ARXIV_ID_PATTERN.test(input);
-}
-
-/**
- * Extract ArXiv ID from various URL formats
- * @param url - URL that might contain an ArXiv ID
- * @returns Extracted ArXiv ID or null if not found
- */
-export function extractArxivIdFromUrl(url: string): string | null {
-  // Match common ArXiv URL patterns
-  // Note: We need to be careful with forward slashes in old format IDs
-  const patterns = [
-    // ArXiv abstract URLs: https://arxiv.org/abs/1706.03762 or https://arxiv.org/abs/cs/0211011
-    /arxiv\.org\/abs\/([^/?#]+(?:\/[^/?#]+)?)/i,
-    // ArXiv PDF URLs: https://arxiv.org/pdf/1706.03762 or https://arxiv.org/pdf/cs/0211011
-    /arxiv\.org\/pdf\/([^/?#.]+(?:\/[^/?#.]+)?)/i,
-    // Local PDF URLs: /pdf/1706.03762 or /pdf/cs/0211011 or /pdf/math-ph/0506203
-    /\/pdf\/([^/?#]+(?:\/[^/?#]+)?)/i
-  ];
-  
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      const candidate = match[1];
-      // Remove .pdf extension if present
-      const cleanId = candidate.replace(/\.pdf$/, '');
-      if (isValidArxivId(cleanId)) {
-        return cleanId;
-      }
-    }
-  }
-  
-  return null;
-}
-
-/**
- * Format ArXiv ID for display purposes
- * @param arxivId - The ArXiv ID
- * @returns Formatted display string
- */
-export function formatArxivIdForDisplay(arxivId: string): string {
-  const parsed = parseArxivId(arxivId);
-  if (!parsed.isValid) return arxivId;
-  
-  if (parsed.isOldFormat) {
-    return `arXiv:${arxivId}`;
-  } else {
-    return `arXiv:${arxivId}`;
-  }
-}
-
-/**
- * Get category name for old format ArXiv IDs
- * @param category - Category code (e.g., "cs", "math-ph")
- * @returns Human-readable category name with graceful fallback
- */
-export function getCategoryName(category: string): string {
-  // Known categories with their full names
-  const knownCategories: Record<string, string> = {
-    'cs': 'Computer Science',
-    'math': 'Mathematics',
-    'math-ph': 'Mathematical Physics',
-    'astro-ph': 'Astrophysics',
-    'cond-mat': 'Condensed Matter',
-    'gr-qc': 'General Relativity and Quantum Cosmology',
-    'hep-ex': 'High Energy Physics - Experiment',
-    'hep-lat': 'High Energy Physics - Lattice',
-    'hep-ph': 'High Energy Physics - Phenomenology',
-    'hep-th': 'High Energy Physics - Theory',
-    'nucl-ex': 'Nuclear Experiment',
-    'nucl-th': 'Nuclear Theory',
-    'physics': 'Physics',
-    'quant-ph': 'Quantum Physics',
-    'q-bio': 'Quantitative Biology',
-    'q-fin': 'Quantitative Finance',
-    'stat': 'Statistics'
-  };
-  
-  // Return known category name if available
-  if (knownCategories[category]) {
-    return knownCategories[category];
-  }
-  
-  // Graceful fallback: format unknown categories in a readable way
-  // Convert hyphens to spaces and capitalize words
-  return category
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 /**
@@ -254,6 +149,33 @@ export function getCategoryPromptContext(category: string): string {
   }
   
   // Graceful fallback for unknown categories
-  const categoryName = getCategoryName(category);
+  const categoryName = category
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
   return `You are a ${categoryName} expert helping a student understand this research paper. Draw upon your expertise in this field to explain concepts clearly and accurately.`;
+}
+
+/**
+ * Check if a file already exists in the Gemini Files API to avoid re-uploading
+ * @param fileName - The filename to check for
+ * @returns Promise<boolean> - True if file exists, false otherwise
+ */
+export async function checkFileExists(fileName: string): Promise<boolean> {
+  try {
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+    const files = await genAI.files.list();
+    
+    // Check if any file has a name that starts with our expected pattern
+    // Iterate through the files using for-await loop
+    for await (const file of files) {
+      if (file.name?.startsWith(fileName) || file.displayName?.includes(fileName)) {
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.warn('Error checking file existence:', error);
+    return false;
+  }
 }

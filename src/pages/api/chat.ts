@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenAI, createUserContent, createPartFromUri, Type } from '@google/genai';
 import { StructuredChatResponse, ChatApiResponse } from '@/types/chat';
-import { parseArxivId, getArxivPdfUrl, getArxivFileName, getCategoryPromptContext } from '@/utils/arxivUtils';
+import { parseArxivId, getArxivPdfUrl, getArxivFileName, getCategoryPromptContext, checkFileExists } from '@/utils/arxivUtils';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -96,58 +96,82 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isFirstMessage = messages.length === 1;
     
     let contents;
+    let uploadedFile: { name?: string; uri?: string; mimeType?: string } | null = null;
     
     if (isFirstMessage) {
-      // Upload PDF to Gemini Files API
-      // Download PDF first
-      const pdfResponse = await fetch(pdfUrl);
-      if (!pdfResponse.ok) {
-        throw new Error(`Failed to download PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
-      }
-      
-      const pdfBuffer = await pdfResponse.arrayBuffer();
-      
-      // Validate that it's actually a PDF
-      const pdfHeader = Buffer.from(pdfBuffer.slice(0, 4)).toString();
-      
-      if (!pdfHeader.startsWith('%PDF')) {
-        throw new Error('Downloaded content is not a valid PDF file');
-      }
-
-      // Check file size
-      const fileSizeMB = pdfBuffer.byteLength / (1024 * 1024);
-      
-      if (fileSizeMB > 2000) { // Files API has higher limits
-        throw new Error(`PDF file too large (${fileSizeMB.toFixed(2)} MB). Maximum size is ~2GB`);
-      }
-      
       // Check if file already exists to avoid re-uploading
-      const fileName = getArxivFileName(parsed.id);
-      let uploadedFile;
+      const baseFileName = getArxivFileName(parsed.id);
+      const fileExists = await checkFileExists(baseFileName);
       
-      try {
-        // Try to get existing file first
-        uploadedFile = await genAI.files.get({ name: `files/${fileName}` });
-      } catch {
-        // File doesn't exist, try to upload it
-        try {
-          const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
-          uploadedFile = await genAI.files.upload({
-            file: pdfBlob,
-            config: {
-              mimeType: 'application/pdf',
-              name: fileName,
-              displayName: `arXiv-${parsed.id}.pdf`
-            }
-          });
-        } catch (uploadError: unknown) {
-          // If upload fails because file already exists, try to get it
-          if (uploadError instanceof Error && uploadError.message && uploadError.message.includes('already exists')) {
-            uploadedFile = await genAI.files.get({ name: `files/${fileName}` });
-          } else {
-            throw uploadError;
+      if (fileExists) {
+        // File already exists, find it in the list
+        const files = await genAI.files.list();
+        for await (const file of files) {
+          if (file.name?.startsWith(baseFileName) || file.displayName?.includes(baseFileName)) {
+            uploadedFile = file;
+            break;
           }
         }
+      }
+      
+      if (!uploadedFile) {
+        // Upload PDF to Gemini Files API
+        // Download PDF first
+        const pdfResponse = await fetch(pdfUrl);
+        if (!pdfResponse.ok) {
+          if (pdfResponse.status === 404) {
+            // PDF not available (withdrawn paper)
+            return res.status(200).json({
+              structured: {
+                content: `**PDF Not Available**\n\nThis paper (${parsed.id}) appears to be withdrawn or the PDF is not available for download. However, I can still help you discuss the paper based on its abstract and metadata.\n\nYou can view the abstract on [arXiv](https://arxiv.org/abs/${parsed.id}) to get more information about this paper.`,
+                suggestedQuestions: [
+                  {
+                    text: "What is this paper about based on its abstract?",
+                    description: "Get a summary of the paper's content"
+                  },
+                  {
+                    text: "What are the main contributions of this research?",
+                    description: "Understand the key findings"
+                  },
+                  {
+                    text: "What methodology was used in this study?",
+                    description: "Learn about the research approach"
+                  }
+                ],
+                responseType: 'welcome'
+              }
+            });
+          }
+          throw new Error(`Failed to download PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+        }
+        
+        const pdfBuffer = await pdfResponse.arrayBuffer();
+        
+        // Validate that it's actually a PDF
+        const pdfHeader = Buffer.from(pdfBuffer.slice(0, 4)).toString();
+        
+        if (!pdfHeader.startsWith('%PDF')) {
+          throw new Error('Downloaded content is not a valid PDF file');
+        }
+
+        // Check file size
+        const fileSizeMB = pdfBuffer.byteLength / (1024 * 1024);
+        
+        if (fileSizeMB > 2000) { // Files API has higher limits
+          throw new Error(`PDF file too large (${fileSizeMB.toFixed(2)} MB). Maximum size is ~2GB`);
+        }
+        
+        // Upload PDF to Gemini Files API
+        const fileName = `${baseFileName}-${Date.now()}`;
+        const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+        uploadedFile = await genAI.files.upload({
+          file: pdfBlob,
+          config: {
+            mimeType: 'application/pdf',
+            name: fileName,
+            displayName: `arXiv-${parsed.id}.pdf`
+          }
+        });
       }
 
       // First message: include PDF content for analysis

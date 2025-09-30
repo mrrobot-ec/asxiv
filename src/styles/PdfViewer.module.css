@@ -1,0 +1,29 @@
+.pdfViewer {
+  position: fixed;
+  top: var(--nav-height, 0px);
+  left: 0;
+  width: calc(100% - min(400px, 30vw));
+  height: calc(100vh - var(--nav-height, 0px));
+  border: none;
+  z-index: 1;
+}
+
+/* Responsive breakpoints to match ChatWidget */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .pdfViewer {
+    width: calc(100% - min(350px, 28vw));
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .pdfViewer {
+    width: calc(100% - min(320px, 25vw));
+  }
+}
+
+@media (max-width: 768px) {
+  .pdfViewer {
+    width: 100vw;
+    height: calc(100vh - var(--nav-height, 0px) - 50vh);
+  }
+}

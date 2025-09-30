@@ -1,14 +1,15 @@
 .container {
   position: fixed;
-  top: 0;
   right: 0;
+  top: var(--nav-height, 0px);
   bottom: 0;
   z-index: 9999;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   font-size: 14px;
-  width: 400px;
+  width: min(400px, 30vw);
+  min-width: 300px;
   background: #ffffff;
   border-left: 1px solid var(--arxiv-border, #dddddd);
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
@@ -409,8 +410,16 @@
   border-color: rgba(137, 19, 27, 0.1);
 }
 
+@media (max-width: 1200px) and (min-width: 769px) {
+  .container {
+    width: min(350px, 28vw);
+    min-width: 280px;
+  }
+}
+
 @media (max-width: 1024px) and (min-width: 769px) {
   .container {
-    width: 350px;
+    width: min(320px, 25vw);
+    min-width: 260px;
   }
 }

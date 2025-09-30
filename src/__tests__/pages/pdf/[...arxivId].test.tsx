@@ -234,7 +234,7 @@ describe('PdfViewer Component - ArXiv ID Routing', () => {
         const iframe = screen.getByTitle('arXiv PDF Viewer - 1706.03762') as HTMLIFrameElement;
         const expectedUrl = encodeURIComponent('https://arxiv.org/pdf/1706.03762');
         expect(iframe.src).toBe(
-          `https://mozilla.github.io/pdf.js/web/viewer.html?file=${expectedUrl}&sidebarViewOnLoad=0`
+          `https://mozilla.github.io/pdf.js/web/viewer.html?file=${expectedUrl}&sidebarViewOnLoad=0&toolbarViewOnLoad=0&navpanesViewOnLoad=0&zoom=page-width`
         );
       });
     });
@@ -251,7 +251,7 @@ describe('PdfViewer Component - ArXiv ID Routing', () => {
         const iframe = screen.getByTitle('arXiv PDF Viewer - cs/0211011') as HTMLIFrameElement;
         const expectedUrl = encodeURIComponent('https://arxiv.org/pdf/cs/0211011');
         expect(iframe.src).toBe(
-          `https://mozilla.github.io/pdf.js/web/viewer.html?file=${expectedUrl}&sidebarViewOnLoad=0`
+          `https://mozilla.github.io/pdf.js/web/viewer.html?file=${expectedUrl}&sidebarViewOnLoad=0&toolbarViewOnLoad=0&navpanesViewOnLoad=0&zoom=page-width`
         );
       });
     });

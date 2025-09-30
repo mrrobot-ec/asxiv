@@ -24,7 +24,7 @@ export interface Message {
   isError?: boolean;
   
   // New optional structured data
-  structured?: StructuredChatResponse;
+  structured?: StructuredChatResponse | undefined;
 }
 
 // API response format
