@@ -43,20 +43,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       all: all as string
     };
 
-    // Validate parameters
-    if (searchParams.start! < 0) {
-      return res.status(400).json({ error: 'Start index must be non-negative' });
+    if (Number.isNaN(searchParams.start!) || searchParams.start! < 0) {
+      return res.status(400).json({ error: 'Start index must be a non-negative number' });
     }
 
-    if (searchParams.maxResults! < 1 || searchParams.maxResults! > 200) {
+    if (
+      Number.isNaN(searchParams.maxResults!) ||
+      searchParams.maxResults! < 1 ||
+      searchParams.maxResults! > 200
+    ) {
       return res.status(400).json({ error: 'Max results must be between 1 and 200' });
     }
 
     const results = await searchArxiv(searchParams);
-    
     res.status(200).json(results);
   } catch (error) {
-    console.error('Search API error:', error);
+    console.error('Search API: failed to search arXiv', error);
     res.status(500).json({ error: 'Failed to search arXiv papers' });
   }
 }

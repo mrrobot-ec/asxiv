@@ -106,7 +106,7 @@ export async function searchArxiv(params: ArxivSearchParams): Promise<ArxivSearc
     const xmlText = await response.text();
     return parseArxivXmlResponse(xmlText, query, start, maxResults);
   } catch (error) {
-    console.error('Error searching arXiv:', error);
+    console.error('arxivSearch: request failed', error);
     throw new Error('Failed to search arXiv papers');
   }
 }

@@ -281,7 +281,7 @@ Set responseType to "answer".`;
     try {
       structuredResponse = JSON.parse(text.trim());
     } catch (parseError) {
-      console.error('Unexpected: Failed to parse Gemini structured output as JSON:', parseError);
+      console.error('API Chat: failed to parse structured response', parseError);
       throw new Error('Invalid structured response from Gemini API');
     }
 
@@ -294,14 +294,6 @@ Set responseType to "answer".`;
     res.status(200).json(apiResponse);
 
   } catch (error) {
-    console.error('Chat API error:', error);
-    
-    // More detailed error handling
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    
     return res.status(500).json({ 
       error: 'Failed to generate response',
       details: error instanceof Error ? error.message : 'Unknown error',

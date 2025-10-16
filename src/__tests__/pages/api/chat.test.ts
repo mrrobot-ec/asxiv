@@ -1,5 +1,5 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '../chat';
+import handler from '@/pages/api/chat';
 
 // Mock the Google Generative AI
 jest.mock('@google/genai', () => {

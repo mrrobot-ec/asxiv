@@ -5,7 +5,7 @@ import Navigation from '../Navigation';
 
 // Mock Next.js router
 const mockPush = jest.fn();
-const mockPathname = '/';
+let mockPathname = '/';
 jest.mock('next/router', () => ({
   useRouter: () => ({
     push: mockPush,
@@ -13,9 +13,17 @@ jest.mock('next/router', () => ({
   }),
 }));
 
+jest.mock('@/context/ThemeContext', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    toggleTheme: jest.fn(),
+  }),
+}));
+
 describe('Navigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPathname = '/';
   });
 
   it('should render navigation links', () => {
@@ -44,16 +52,10 @@ describe('Navigation', () => {
   });
 
   it('should apply active class to current page', () => {
-    // Mock different pathname
-    jest.doMock('next/router', () => ({
-      useRouter: () => ({
-        push: mockPush,
-        pathname: '/search',
-      }),
-    }));
-
+    mockPathname = '/search';
     render(<Navigation />);
     const searchLink = screen.getByText('Search').closest('a');
     expect(searchLink).toHaveClass('navLink');
+    expect(searchLink).toHaveClass('active');
   });
 });

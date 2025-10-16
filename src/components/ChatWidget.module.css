@@ -10,16 +10,17 @@
   font-size: 14px;
   width: min(400px, 30vw);
   min-width: 300px;
-  background: #ffffff;
+  background: var(--arxiv-surface, #ffffff);
   border-left: 1px solid var(--arxiv-border, #dddddd);
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  box-shadow: -2px 0 12px var(--arxiv-shadow-strong, rgba(0, 0, 0, 0.1));
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .header {
   padding: 1rem;
   background: var(--arxiv-red, #89131b);
-  color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--arxiv-red-contrast, #ffffff);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .headerTitle {
@@ -44,9 +45,10 @@
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  background: var(--arxiv-light-gray, #f8f9fa);
+  background: var(--arxiv-surface-alt, #f8f9fa);
   border-bottom: 1px solid var(--arxiv-border, #dddddd);
-  min-height: 0; /* Important for flex child with overflow */
+  min-height: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .message {
@@ -59,17 +61,18 @@
 }
 
 .message.bot {
-  background: #ffffff;
+  background: var(--arxiv-surface, #ffffff);
   border: 1px solid var(--arxiv-border, #dddddd);
   margin-right: 2rem;
   line-height: 1.5;
   max-width: 90%;
   width: fit-content;
+  color: var(--arxiv-text, #111111);
 }
 
 .message.user {
   background: var(--arxiv-red, #89131b);
-  color: #ffffff;
+  color: var(--arxiv-red-contrast, #ffffff);
   max-width: 70%;
   margin-left: auto;
   margin-right: 0;
@@ -143,7 +146,7 @@
 }
 
 .message.bot code {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   padding: 0.1em 0.3em;
   border-radius: 3px;
   font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
@@ -151,12 +154,25 @@
 }
 
 .message.bot pre {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 6px;
   padding: 1em;
   margin: 1em 0;
   overflow-x: auto;
+}
+
+body.dark-mode .container {
+  box-shadow: -2px 0 18px var(--arxiv-shadow-strong, rgba(3, 7, 18, 0.6));
+}
+
+body.dark-mode .message.bot code {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .message.bot pre {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .message.bot pre code {
@@ -170,7 +186,7 @@
   border-left: 3px solid var(--arxiv-red, #89131b);
   margin: 1em 0;
   padding: 0.5em 1em;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--arxiv-surface-alt, rgba(0, 0, 0, 0.02));
   font-style: italic;
 }
 
@@ -183,19 +199,19 @@
 
 .message.bot th,
 .message.bot td {
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--arxiv-border, rgba(0, 0, 0, 0.1));
   padding: 0.5em 0.8em;
   text-align: left;
 }
 
 .message.bot th {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--arxiv-surface-alt, rgba(0, 0, 0, 0.05));
   font-weight: 600;
 }
 
 .message.bot hr {
   border: none;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--arxiv-border, rgba(0, 0, 0, 0.1));
   margin: 1.5em 0;
 }
 
@@ -216,7 +232,7 @@
 
 .inputRow {
   display: flex;
-  background: #ffffff;
+  background: var(--arxiv-surface, #ffffff);
   border-top: 1px solid var(--arxiv-border, #dddddd);
   padding: 0.5rem;
   gap: 0.5rem;
@@ -230,7 +246,9 @@
   font-size: 14px;
   font-family: inherit;
   outline: none;
-  background: #ffffff;
+  background: var(--arxiv-surface, #ffffff);
+  color: var(--arxiv-text, #111111);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .input:focus {
@@ -241,21 +259,23 @@
 .sendButton {
   padding: 1rem 1.5rem;
   background: var(--arxiv-red, #89131b);
-  color: #ffffff;
+  color: var(--arxiv-red-contrast, #ffffff);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .sendButton:hover:not(:disabled) {
-  background: #750f16;
+  box-shadow: 0 12px 24px rgba(137, 19, 27, 0.25);
+  transform: translateY(-1px);
 }
 
 .sendButton:active:not(:disabled) {
-  background: #5d0c12;
+  transform: translateY(0);
 }
 
 /* Loading and error states */
@@ -278,32 +298,33 @@
 }
 
 .message.error {
-  background: #fef2f2 !important;
-  border: 1px solid #fecaca !important;
-  color: #dc2626 !important;
+  background: rgba(137, 19, 27, 0.12) !important;
+  border: 1px solid rgba(137, 19, 27, 0.28) !important;
+  color: var(--arxiv-red, #89131b) !important;
 }
 
 .message.error.bot {
-  background: #fef2f2 !important;
-  border-color: #fecaca !important;
-  color: #dc2626 !important;
+  background: rgba(137, 19, 27, 0.12) !important;
+  border-color: rgba(137, 19, 27, 0.28) !important;
+  color: var(--arxiv-red, #89131b) !important;
 }
 
 .error {
-  background: #fee;
-  border-color: #fcc;
-  color: #c66;
+  background: rgba(137, 19, 27, 0.12);
+  border-color: rgba(137, 19, 27, 0.28);
+  color: var(--arxiv-red, #89131b);
 }
 
 /* Disabled states */
 .input:disabled {
-  background: #f0f0f0;
-  color: #999;
+  background: var(--arxiv-surface-alt, #f0f0f0);
+  color: var(--arxiv-text-muted, #999999);
   cursor: not-allowed;
 }
 
 .sendButton:disabled {
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* Responsive styles for mobile and tablet */
@@ -314,7 +335,7 @@
     right: 0;
     border-left: none;
     border-top: 1px solid var(--arxiv-border, #dddddd);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -2px 12px var(--arxiv-shadow, rgba(0, 0, 0, 0.1));
   }
   
   .header {
@@ -357,7 +378,7 @@
 .suggestedQuestions {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--arxiv-border, rgba(0, 0, 0, 0.1));
 }
 
 .suggestedTitle {
@@ -374,7 +395,7 @@
 }
 
 .questionButton {
-  background: rgba(137, 19, 27, 0.05);
+  background: rgba(137, 19, 27, 0.08);
   border: 1px solid rgba(137, 19, 27, 0.2);
   color: var(--arxiv-red, #89131b);
   padding: 0.5rem 0.75rem;

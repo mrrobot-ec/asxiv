@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Custom404 from '../404';
+import Custom404 from '@/pages/404';
 
 describe('404 Page', () => {
-  it('should render 404 page elements', () => {
+  it('should render 404 page elements when page loads', () => {
     render(<Custom404 />);
     
     expect(screen.getByText('404')).toBeInTheDocument();
@@ -12,7 +12,7 @@ describe('404 Page', () => {
     expect(screen.getByText('This page only works with arXiv PDF URLs in the format:')).toBeInTheDocument();
   });
 
-  it('should have correct link to example PDF', () => {
+  it('should include example PDF link when page loads', () => {
     render(<Custom404 />);
     
     const exampleLink = screen.getByText('/pdf/1706.03762 (Attention Is All You Need)');

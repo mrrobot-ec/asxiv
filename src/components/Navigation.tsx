@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FC } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 import styles from './Navigation.module.css';
 
 const Navigation: FC = () => {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <nav className={styles.nav}>
@@ -26,6 +28,14 @@ const Navigation: FC = () => {
           >
             Search
           </Link>
+          <button
+            type="button"
+            className={styles.themeToggle}
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
         </div>
       </div>
     </nav>

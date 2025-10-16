@@ -15,17 +15,42 @@ body,
 
 body {
   font-family: system-ui, -apple-system, Helvetica, Arial, sans-serif;
-  background: #ffffff;
-  color: #111111;
+  background: var(--arxiv-bg, #ffffff);
+  color: var(--arxiv-text, #111111);
   line-height: 1.4;
-  padding-top: 72px; /* Account for fixed navigation bar (1rem top + 1rem bottom + 1.5rem font + borders) */
+  padding-top: 72px; /* Account for fixed navigation bar */
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* arXiv-inspired color palette variables */
 :root {
   --arxiv-red: #89131b;
-  --arxiv-light-gray: #f5f5f5;
-  --arxiv-dark-gray: #333333;
+  --arxiv-red-contrast: #ffffff;
+  --arxiv-bg: #ffffff;
+  --arxiv-surface: #ffffff;
+  --arxiv-surface-alt: #f8f9fc;
   --arxiv-text: #111111;
+  --arxiv-text-muted: #4b5563;
   --arxiv-border: #dddddd;
+  --arxiv-light-gray: #f8f9fa;
+  --arxiv-shadow: rgba(15, 23, 42, 0.08);
+  --arxiv-shadow-strong: rgba(15, 23, 42, 0.18);
+  --assistant-badge-bg: #ede9fe;
+  --assistant-badge-text: #4338ca;
+}
+
+body.dark-mode {
+  --arxiv-red: #f87171;
+  --arxiv-red-contrast: #1f2937;
+  --arxiv-bg: #0f172a;
+  --arxiv-surface: #111827;
+  --arxiv-surface-alt: #1f2937;
+  --arxiv-text: #f3f4f6;
+  --arxiv-text-muted: #cbd5f5;
+  --arxiv-border: #1f2937;
+  --arxiv-light-gray: #1f2937;
+  --arxiv-shadow: rgba(3, 7, 18, 0.55);
+  --arxiv-shadow-strong: rgba(3, 7, 18, 0.7);
+  --assistant-badge-bg: rgba(137, 19, 27, 0.25);
+  --assistant-badge-text: #f3f4f6;
 }

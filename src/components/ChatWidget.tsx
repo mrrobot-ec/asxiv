@@ -10,7 +10,6 @@ import { processPageReferences, handlePageNavigation } from '@/utils/pageLinks';
 const MarkdownWithPageLinks: React.FC<{ content: string }> = ({ content }) => {
   const handlePageClick = (pageNum: string | undefined) => {
     if (!pageNum) return;
-    console.log('Page link clicked:', pageNum);
     handlePageNavigation(pageNum);
   };
 
@@ -222,10 +221,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled, don't show error
       }
-      
-      console.error('Chat error:', error);
-      
-      // Add error message as a bot message in the chat
+
+      console.error('ChatWidget: failed to process AI response', error);
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: error instanceof Error ? error.message : 'Failed to get response. Please try again.',
@@ -274,12 +272,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
-        console.error('API Error Details:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-          arxivId: currentArxivId
-        });
         throw new Error(`Welcome message API error: ${errorMessage}`);
       }
 
@@ -301,8 +293,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
         structured: structuredData
       }]);
     } catch (error: unknown) {
-      console.error('Welcome message error:', error);
-      // Provide a more detailed fallback message with debugging info
+      console.error('ChatWidget: failed to load welcome message', error);
       const fallbackMessage = `Welcome! I'm here to help you understand arXiv paper ${currentArxivId}. \n\nAsk me anything about the paper!\n\n*Note: AI-generated welcome message is temporarily unavailable. You can still chat about the paper.*`;
       
       setMessages([{
@@ -436,9 +427,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
       if (error instanceof Error && error.name === 'AbortError') {
         return; // Request was cancelled, don't show error
       }
-      
-      console.error('Chat error:', error);
-      
+
       // Add error message as a bot message in the chat
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -458,8 +447,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ arxivId, navHeight = 0 }) => {
     }
     } catch (unexpectedError: unknown) {
       // Handle any unexpected runtime errors
-      console.error('Unexpected error in handleSubmit:', unexpectedError);
-      
       const errorMessage: Message = {
         id: Date.now().toString(),
         text: unexpectedError instanceof Error ? unexpectedError.message : 'An unexpected error occurred. Please try refreshing the page.',

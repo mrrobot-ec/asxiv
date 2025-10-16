@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import CustomError from '../_error';
+import CustomError from '@/pages/_error';
 
 describe('Error Page', () => {
-  it('should render error page elements', () => {
+  it('should render error page elements when page loads', () => {
     render(<CustomError />);
     
     expect(screen.getByText('Client-side error occurred')).toBeInTheDocument();
@@ -12,7 +12,7 @@ describe('Error Page', () => {
     expect(screen.getByText('Go back to:')).toBeInTheDocument();
   });
 
-  it('should have correct link to home page', () => {
+  it('should include home link when page loads', () => {
     render(<CustomError />);
     
     const homeLink = screen.getByText('Home');

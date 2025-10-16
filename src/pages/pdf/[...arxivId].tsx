@@ -63,12 +63,10 @@ const PdfViewer: FC = () => {
         
         setTimeout((): void => {
           try {
-            // Try to access iframe content to check for errors
             const iframeElement: HTMLIFrameElement = iframe as HTMLIFrameElement;
             const iframeDoc: Document | null | undefined = iframeElement.contentDocument || iframeElement.contentWindow?.document;
             if (iframeDoc) {
               const bodyText: string = iframeDoc.body?.textContent || '';
-              // Check for PDF.js specific error messages
               if (bodyText.includes('404') || bodyText.includes('Not Found') || bodyText.includes('withdrawn') || 
                   bodyText.includes('PDF not available') || bodyText.includes('Unable to load document') ||
                   bodyText.includes('Failed to fetch') || bodyText.includes('An error occurred while loading the PDF')) {
@@ -76,11 +74,9 @@ const PdfViewer: FC = () => {
               }
             }
           } catch {
-            // Cross-origin error is normal for PDF.js viewer, don't treat as PDF error
-            console.log('Cross-origin access blocked (normal for PDF.js viewer)');
-            // Don't call handlePdfError() for cross-origin errors
+            /* Cross-origin access is expected for PDF.js viewer; ignore errors */
           }
-        }, 3000); // Give PDF.js time to load
+        }, 3000);
       });
     }
 
@@ -155,9 +151,7 @@ const PdfViewer: FC = () => {
         className={pdfViewerStyles.pdfViewer}
         allow="fullscreen; clipboard-write; clipboard-read"
         sandbox="allow-same-origin allow-scripts allow-forms allow-downloads allow-popups"
-        onError={(): void => {
-          console.log('PDF failed to load - may be withdrawn or unavailable');
-        }}
+        onError={() => undefined}
       />
       <div style={{
         position: 'fixed',

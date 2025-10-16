@@ -1,5 +1,5 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '../search';
+import handler from '@/pages/api/search';
 
 // Mock fetch
 global.fetch = jest.fn();
